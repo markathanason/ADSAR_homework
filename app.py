@@ -1,4 +1,3 @@
-import numpy as np
 import datetime as dt
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
