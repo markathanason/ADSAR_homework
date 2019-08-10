@@ -23,17 +23,17 @@ def welcome():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/start_date<br/>"
-        f"/api/v1.0/start_date/end_date<br/>")
+        f"/api/v1.0/start_date (average only)<br/>"
+        f"/api/v1.0/start_date/end_date (average only)<br/>")
 
 @app.route("/api/v1.0/precipitation")
 def precipitation():
     precipitation_data = session.query(Measurement.date, Measurement.prcp).order_by(Measurement.date).all()
     total_precipitation=[]
-    for precipitation in precipitation_data:
+    for date, prcp in precipitation_data:
         precipitation_dict = {}
-        precipitation_dict["date"] = precipitation.date
-        precipitation_dict["prcp"] = precipitation.prcp
+        precipitation_dict["date"] = date
+        precipitation_dict["prcp"] = prcp
         total_precipitation.append(precipitation_dict)
     session.close()
     return jsonify(total_precipitation)
@@ -42,10 +42,10 @@ def precipitation():
 def stations():
     stations = session.query(Measurement.station, func.count(Measurement.station)).group_by(Measurement.station).order_by(func.count(Measurement.station).desc()).all()
     stations_list = []
-    for station in stations:
+    for station, count in stations:
         station_dict = {}
-        station_dict["station"] = station[0]
-        station_dict["count"] = station[1]
+        station_dict["station"] = station
+        station_dict["ID"] = count
         stations_list.append(station_dict)
     session.close()
     return jsonify(stations_list)
@@ -64,10 +64,10 @@ def tobs():
     tobs_data = session.query(Measurement.date, Measurement.tobs).filter(Measurement.date >= query_date).order_by(Measurement.date).all()
 
     pastYear_tobs=[]
-    for tobs in tobs_data:
+    for date, station in tobs_data:
         tobs_dict = {}
-        tobs_dict["date"] = tobs.date
-        tobs_dict["station"] = tobs.tobs
+        tobs_dict["date"] = date
+        tobs_dict["station"] = station
         pastYear_tobs.append(tobs_dict)
         session.close()
     return jsonify(pastYear_tobs)
