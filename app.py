@@ -36,7 +36,7 @@ def precipitation():
         precipitation_dict["date"] = precipitation.date
         precipitation_dict["prcp"] = precipitation.prcp
         total_precipitation.append(precipitation_dict)
-
+    session.close()
     return jsonify(total_precipitation)
     
 @app.route("/api/v1.0/stations")
@@ -48,7 +48,7 @@ def stations():
         station_dict["station"] = station[0]
         station_dict["count"] = station[1]
         stations_list.append(station_dict)
-
+    session.close()
     return jsonify(stations_list)
 
 @app.route("/api/v1.0/tobs")
@@ -70,23 +70,34 @@ def tobs():
         tobs_dict["date"] = tobs.date
         tobs_dict["station"] = tobs.tobs
         pastYear_tobs.append(tobs_dict)
-
+        session.close()
     return jsonify(pastYear_tobs)
 
 @app.route("/api/v1.0/<start_date>")
+def calc_temps_start(start_date):
+    temps = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).filter(Measurement.date >= start_date).all()
+    calc_tobs=[]
+    for TMIN, TAVG, TMAX in temps:
+        calc_tobs_dict = {}
+        calc_tobs_dict["TMIN"] = TMAX
+        calc_tobs_dict["TAVG"] = TAVG
+        calc_tobs_dict["TMAX"] = TMIN
+        calc_tobs.append(calc_tobs_dict)
+    session.close()
+    return jsonify(calc_tobs)
+
 @app.route("/api/v1.0/<start_date>/<end_date>")
 def calc_temps_start_end(start_date, end_date):
     temps = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).all()
     calc_tobs=[]
-    for temp in temps:
+    for TMIN, TAVG, TMAX in temps:
         calc_tobs_dict = {}
-        calc_tobs_dict["TMIN"] = func.min(Measurement.tobs)
-        calc_tobs_dict["TAVG"] = func.avg(Measurement.tobs)
-        calc_tobs_dict["TMAX"] = func.max(Measurement.tobs)
+        calc_tobs_dict["TMIN"] = TMAX
+        calc_tobs_dict["TAVG"] = TAVG
+        calc_tobs_dict["TMAX"] = TMIN
         calc_tobs.append(calc_tobs_dict)
-
+    session.close()
     return jsonify(calc_tobs)
-    return jsonify(temps)
 
 if __name__ == '__main__':
     app.run(debug=True)
